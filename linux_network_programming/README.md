@@ -65,12 +65,12 @@ file_open_rw_lseek_fstat_mmap_fcntl_ioctl
 -------------------
 文件操作，包括文件创建，打开关闭，文件映射，文件属性控制，文件输入输出控制   
     
-open        	 
-read_wirte        	
+open     
+read_wirte      	
 lseek    
-fstat     	
-mmap      	
-fcntl     	
+fstat    
+mmap    
+fcntl    
 ioctl   
 
 
