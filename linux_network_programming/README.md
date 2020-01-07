@@ -53,14 +53,26 @@ read_write_readv_recv_recvmsg_select_poll
 linux的IO操作和IO复用功能的实现    
 包括文件的读写，发送接收，IO复用，阻塞和非阻塞功能的实现    
     
-read_write   readv_writev  recv_send  recvmsg_sendmsg  select  poll  non_block    
+read_write
+readv_writev
+recv_send  
+recvmsg_sendmsg  
+select  
+poll  
+non_block    
 
 
 file_open_rw_lseek_fstat_mmap_fcntl_ioctl
 -------------------
 文件操作，包括文件创建，打开关闭，文件映射，文件属性控制，文件输入输出控制   
     
-open     read_wirte    lseek    fstat    mmap    fcntl    ioctl   
+open     
+read_wirte    
+lseek    
+fstat    
+mmap    
+fcntl    
+ioctl   
 
 
 server_mode_choise
