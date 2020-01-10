@@ -1,12 +1,31 @@
+/************************************************************
+*Copyright (C),lcb0281at163.com lcb0281atgmail.com
+*FileName: 01_server_tcp.c
+*BlogAddr: caibiao-lee.blog.csdn.net
+*Description: TCP 客户端收发数据 
+*Date:     2020-01-04
+*Author:   Caibiao Lee
+*Version:  V1.0
+*Others:
+	通过read write 函数的返回值和错误码判断对方连接是否已经断开
+*History:
+***********************************************************/
+#include <sys/uio.h>
+#include <string.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <unistd.h>
-#include <linux/in.h>
+#include <arpa/inet.h>
 #include <signal.h>
+#include <errno.h>
+#include <netinet/ip.h>
+#include <netinet/tcp.h>
 
+#define SERVER_IP_ADDR	"192.168.1.111"
 #define PORT 8888		/* 侦听端口地址 */
 #define BACKLOG 2		/* 侦听队列长度 */
 
@@ -26,21 +45,56 @@ void sig_pipe(int sign)
 /* 服务器对客户端的处理 */
 void process_conn_server(int s32SocketFd)
 {
-	ssize_t size = 0;
+	int size = 0;
 	char buffer[1024];	/* 数据的缓冲区 */
+	int optlen = -1;	/* 整型的选项类型值 */
+	int l_s32Ret = 0;
+
+	/* 设置发送和接收超时时间 */
+	struct timeval tv;
+	tv.tv_sec = 10;	/* 1秒 */
+	tv.tv_usec = 200000;/* 200ms */
+	optlen = sizeof(tv);
+	l_s32Ret = setsockopt(s32SocketFd, SOL_SOCKET, SO_RCVTIMEO, &tv, optlen); /* 设置接收超时时间 */
+	if(l_s32Ret == -1){/* 设置接收超时时间失败 */
+		printf("设置接收超时时间失败\n");			
+	}
+	
+	l_s32Ret = setsockopt(s32SocketFd, SOL_SOCKET, SO_SNDTIMEO, &tv, optlen);/* 设置发送超时时间 */
+	if(l_s32Ret == -1){
+		printf("设置发送超时时间失败\n");			
+	}
 	
 	for(;;)
-	{	/* 循环处理过程 */
+	{	
 		/* 从套接字中读取数据放到缓冲区buffer中 */
 		size = read(s32SocketFd, buffer, 1024);	
-		if(size == 0)
+		if(size==0)
 		{/* 没有数据 */
-			return;	
+			printf("read size = %d, error %d \n",size,errno);
+			//return;	
+		}else if(size<0)
+		{
+			printf("read size = %d, error %d \n",size,errno);
+			//return ;
+		}else 
+		{
+			printf("recv data:%s \n",buffer);
+			
 		}
-		
+		memset(buffer,0,sizeof(buffer));	
 		/* 构建响应字符，为接收到客户端字节的数量 */
-		sprintf(buffer, "%d bytes altogether\n", size);
-		write(s32SocketFd, buffer, strlen(buffer)+1);/* 发给客户端 */
+		strcpy(buffer,"I am server");
+		size = write(s32SocketFd, buffer, strlen(buffer)+1);/* 发给客户端 */
+		if((strlen(buffer)+1)==size)
+		{
+
+		}else
+		{
+			printf("write data error size = %d, errno=%d\n",size,errno);
+		//return ;
+		}
+		sleep(1);
 	}	
 }
 
@@ -68,9 +122,19 @@ int main(int argc, char *argv[])
 	/* 设置服务器地址 */
 	bzero(&server_addr, sizeof(server_addr));	/* 清0 */
 	server_addr.sin_family = AF_INET;			/* 协议族 */
-	server_addr.sin_addr.s_addr = htonl(INADDR_ANY);/* 本地地址 */
+	server_addr.sin_addr.s_addr = inet_addr(SERVER_IP_ADDR);/*服务器IP地址*/
 	server_addr.sin_port = htons(PORT);			/* 服务器端口 */
 	
+	
+    /*设置IP地址可以重复绑定*/
+	int l_s32UseAddr = 1;
+    if(setsockopt(l_s32ServerFd, SOL_SOCKET, SO_REUSEADDR, &l_s32UseAddr, sizeof(int)) < 0)
+    {
+        printf("%s %d\tsetsockopt error! Error code: %d，Error message: %s\n", 
+            __FUNCTION__, __LINE__, errno, strerror(errno));
+        return -2;
+    }
+
 	/* 绑定地址结构到套接字描述符 */
 	l_s32Ret = bind(l_s32ServerFd, (struct sockaddr*)&server_addr, sizeof(server_addr));
 	if(l_s32Ret < 0)
